@@ -93,8 +93,15 @@ public class Program
         //builder.Services.AddSwaggerGen();
 
 
+        builder.Services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = configuration.GetConnectionString("Redis");
+            options.InstanceName = "ShopApi:";
+        });
+
         //--------------SERVICES-------------------
-        builder.Services.AddScoped<IProductService, ProductService>();
+        builder.Services.AddSingleton<ICacheService, RedisCacheService>();
+        builder.Services.AddSingleton<IProductService, ProductService>();
         builder.Services.AddScoped<ICategoryService, CategoryService>();
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IImageService, ImageService>();

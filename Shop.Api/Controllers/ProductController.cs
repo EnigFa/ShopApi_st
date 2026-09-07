@@ -12,35 +12,29 @@ namespace Shop.Api.Controllers;
 [LogActionFilter]
 public class ProductController(IProductService _productService) : ControllerBase
 {
-    //private readonly IProductService _productService;
-    //public ProductController(IProductService productService)
-    //{
-    //    _productService = productService;
-    //}
-
-    //EndPoint
     [HttpGet]
-  
-    public List<Product> GetProducts()
+    public async Task<List<Product>> GetProducts()
     {
-        return _productService.GetAllProducts();
+        return await _productService.GetAllProductsAsync();
     }
 
     [HttpGet("{id}")]
-    public IActionResult GetProductById([FromRoute] int id)
+    public async Task<IActionResult> GetProductById([FromRoute] int id)
     {
-        var product = new Product()
+        var product = await _productService.GetProductByIdAsync(id);
+
+        if (product == null)
         {
-            Name = $"Test Product {id}",
-            Price = 100
-        };
+            return NotFound();
+        }
+
         return Ok(product);
     }
 
     [HttpPost]
-    public IActionResult AddNewProduct([FromBody] Product product)
+    public async Task<IActionResult> AddNewProduct([FromBody] Product product)
     {
-        _productService.AddProduct(product);
+        await _productService.AddProductAsync(product);
         return Created();
     }
 }

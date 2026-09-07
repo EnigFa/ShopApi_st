@@ -4,6 +4,9 @@ namespace Shop.Api.Interfaces;
 
 public interface IProductService
 {
-    List<Product> GetAllProducts();
-    void AddProduct(Product product);
+    Task<List<Product>> GetAllProductsAsync();
+
+    Task<Product?> GetProductByIdAsync(int id);
+
+    Task AddProductAsync(Product product);
 }
