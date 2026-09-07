@@ -9,7 +9,7 @@ namespace Shop.Api.Controllers;
 
 
 [ApiController]
-[Route("api/v1/[controller]")] //https://ip:port/api/v1
+[Route("api/v1/categories")]
 public class CategoryController(ICategoryService _categoryService, IImageService _imageService, IConfiguration _configuration) : ControllerBase
 {
     [Authorize]

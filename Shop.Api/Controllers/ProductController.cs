@@ -1,27 +1,26 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Shop.Api.Filters;
-using Shop.Api.Interfaces;
-using Shop.Domain.Models;
+using Shop.Application.DTOs.ProductDTOs;
+using Shop.Application.Interfaces.Services;
 
 namespace Shop.Api.Controllers;
-//URL - Uniform Resource Locator - текстовий рядок, який вказує
-//на місце розташування ресурса
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v1/products")]
 [LogActionFilter]
-public class ProductController(IProductService _productService) : ControllerBase
+public class ProductController(IProductService productService) : ControllerBase
 {
     [HttpGet]
-    public async Task<List<Product>> GetProducts()
+    public async Task<IActionResult> GetProducts()
     {
-        return await _productService.GetAllProductsAsync();
+        var products = await productService.GetAllProductsAsync();
+        return Ok(products);
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     public async Task<IActionResult> GetProductById([FromRoute] int id)
     {
-        var product = await _productService.GetProductByIdAsync(id);
+        var product = await productService.GetProductByIdAsync(id);
 
         if (product == null)
         {
@@ -32,9 +31,13 @@ public class ProductController(IProductService _productService) : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> AddNewProduct([FromBody] Product product)
+    public async Task<IActionResult> AddNewProduct([FromBody] ProductCreateDTO dto)
     {
-        await _productService.AddProductAsync(product);
-        return Created();
+        var product = await productService.CreateProductAsync(dto);
+
+        return CreatedAtAction(
+            nameof(GetProductById),
+            new { id = product.Id },
+            product);
     }
 }

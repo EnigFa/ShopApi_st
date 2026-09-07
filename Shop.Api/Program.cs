@@ -54,7 +54,8 @@ public class Program
         builder.Services.AddAutoMapper(
             _ => { },
             typeof(CategoryProfile).Assembly,
-            typeof(UserProfile).Assembly
+            typeof(UserProfile).Assembly,
+            typeof(ProductProfile).Assembly
         );
 
         // ================= CORS =================
@@ -101,7 +102,7 @@ public class Program
 
         //--------------SERVICES-------------------
         builder.Services.AddSingleton<ICacheService, RedisCacheService>();
-        builder.Services.AddSingleton<IProductService, ProductService>();
+        builder.Services.AddScoped<IProductService, ProductService>();
         builder.Services.AddScoped<ICategoryService, CategoryService>();
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IImageService, ImageService>();
@@ -110,6 +111,7 @@ public class Program
         builder.Services.AddScoped<IEmailService, EmailService>();
         //--------------REPOSITORIES
         builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+        builder.Services.AddScoped<IProductRepository, ProductRepository>();
         builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
