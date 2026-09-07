@@ -27,4 +27,19 @@ public class ProductRepository(ShopDbContext context) : IProductRepository
         await context.SaveChangesAsync();
         return product;
     }
+
+    public async Task<bool> DeleteProductAsync(int id)
+    {
+        var product = await context.Products
+            .FirstOrDefaultAsync(item => item.Id == id);
+
+        if (product == null)
+        {
+            return false;
+        }
+
+        context.Products.Remove(product);
+        await context.SaveChangesAsync();
+        return true;
+    }
 }
