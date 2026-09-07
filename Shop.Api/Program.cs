@@ -9,6 +9,7 @@ using Shop.Application.Interfaces.Helpers;
 using Shop.Application.Interfaces.Repository;
 using Shop.Application.Interfaces.Services;
 using Shop.Application.Mapping;
+using Shop.Application.Queries.ProductQueries.GetAllProducts;
 using Shop.Application.Services;
 using Shop.Infrastructure.Configuration;
 using Shop.Infrastructure.Data;
@@ -57,6 +58,10 @@ public class Program
             typeof(UserProfile).Assembly,
             typeof(ProductProfile).Assembly
         );
+
+        builder.Services.AddMediatR(cfg =>
+            cfg.RegisterServicesFromAssembly(typeof(GetAllProductsQuery).Assembly));
+
 
         // ================= CORS =================
         builder.Services.AddCors(options =>

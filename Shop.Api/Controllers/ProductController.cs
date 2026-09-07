@@ -1,19 +1,22 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using Shop.Api.Filters;
+using Shop.Application.Commands.ProductCommands.CreateProduct;
 using Shop.Application.DTOs.ProductDTOs;
 using Shop.Application.Interfaces.Services;
+using Shop.Application.Queries.ProductQueries.GetAllProducts;
 
 namespace Shop.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/products")]
 [LogActionFilter]
-public class ProductController(IProductService productService) : ControllerBase
+public class ProductController(IMediator mediator, IProductService productService) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetProducts()
+    public async Task<IActionResult> GetProducts(CancellationToken cancellationToken)
     {
-        var products = await productService.GetAllProductsAsync();
+        var products = await mediator.Send(new GetAllProductsQuery(), cancellationToken);
         return Ok(products);
     }
 
@@ -31,13 +34,23 @@ public class ProductController(IProductService productService) : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> AddNewProduct([FromBody] ProductCreateDTO dto)
+    public async Task<IActionResult> AddNewProduct(
+        [FromBody] ProductCreateDTO dto,
+        CancellationToken cancellationToken)
     {
-        var product = await productService.CreateProductAsync(dto);
+        var id = await mediator.Send(
+            new CreateProductCommand(
+                dto.Name,
+                dto.Description,
+                dto.Price,
+                dto.StockQty,
+                dto.IsActive,
+                dto.CategoryId),
+            cancellationToken);
 
         return CreatedAtAction(
             nameof(GetProductById),
-            new { id = product.Id },
-            product);
+            new { id },
+            id);
     }
 }
