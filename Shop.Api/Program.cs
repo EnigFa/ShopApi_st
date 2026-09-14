@@ -118,10 +118,12 @@ public class Program
         builder.Services.AddScoped<IJWTService, JWTService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddSingleton<IUserQueuePublisher, RabbitMqUserPublisher>();
+        builder.Services.AddSingleton<IOrderQueuePublisher, RabbitMqOrderPublisher>();
         //--------------REPOSITORIES
         builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
         builder.Services.AddScoped<IProductRepository, ProductRepository>();
         builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+        builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
         //builder.Services.AddOpenApi();

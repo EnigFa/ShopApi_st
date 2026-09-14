@@ -1,54 +1,39 @@
-using Microsoft.Extensions.Configuration;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using RabbitMqReader;
-using System.Text;
+using Shop.Application.Interfaces.Repository;
+using Shop.Application.Interfaces.Services;
+using Shop.Application.Services;
+using Shop.Infrastructure.Configuration;
+using Shop.Infrastructure.Data;
+using Shop.Infrastructure.Repositories;
+using Shop.Infrastructure.Services;
 
-var configuration = new ConfigurationBuilder()
-    .SetBasePath(AppContext.BaseDirectory)
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .Build();
-
-var settings = configuration
-    .GetSection("RabbitMQ")
-    .Get<RabbitMqSettings>()
-    ?? throw new InvalidOperationException("Секція RabbitMQ відсутня в appsettings.json");
-
-var factory = new ConnectionFactory
+var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
 {
-    HostName = settings.HostName,
-    Port = settings.Port,
-    UserName = settings.UserName,
-    Password = settings.Password
-};
+    Args = args,
+    ContentRootPath = AppContext.BaseDirectory
+});
 
-await using var connection = await factory.CreateConnectionAsync();
-await using var channel = await connection.CreateChannelAsync();
+builder.Services.Configure<RabbitMqSettings>(
+    builder.Configuration.GetSection("RabbitMQ"));
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection("Email"));
 
-await channel.QueueDeclareAsync(
-    queue: settings.UsersQueue,
-    durable: true,
-    exclusive: false,
-    autoDelete: false,
-    arguments: null);
-
-var consumer = new AsyncEventingBasicConsumer(channel);
-consumer.ReceivedAsync += async (_, ea) =>
+builder.Services.AddDbContext<ShopDbContext>(options =>
 {
-    var json = Encoding.UTF8.GetString(ea.Body.ToArray());
-    Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Прочитано з черги {settings.UsersQueue}:");
-    Console.WriteLine(json);
-    Console.WriteLine();
+    var connectionString = builder.Configuration["ConnectionStrings:SqlServerConnection"]
+        ?? throw new InvalidOperationException("ConnectionStrings:SqlServerConnection is missing");
 
-    await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
-};
+    options.UseSqlServer(connectionString);
+});
 
-await channel.BasicConsumeAsync(
-    queue: settings.UsersQueue,
-    autoAck: false,
-    consumer: consumer);
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderProcessingService, OrderProcessingService>();
+builder.Services.AddHostedService<UsersQueueListener>();
+builder.Services.AddHostedService<OrdersQueueListener>();
 
-Console.WriteLine(
-    $"RabbitMqReader слухає чергу '{settings.UsersQueue}' на {settings.HostName}:{settings.Port}");
-Console.WriteLine("Зареєструйте користувача через API. Натисніть Enter, щоб вийти.");
-Console.ReadLine();
+var host = builder.Build();
+await host.RunAsync();

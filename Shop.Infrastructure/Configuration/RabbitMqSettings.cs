@@ -11,4 +11,6 @@ public class RabbitMqSettings
     public string Password { get; set; } = "guest";
 
     public string UsersQueue { get; set; } = "Users";
+
+    public string OrdersQueue { get; set; } = "Orders";
 }
