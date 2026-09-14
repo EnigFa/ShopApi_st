@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Shop.Api.Filters;
 using Shop.Application.Commands.ProductCommands.DeactivateProduct;
+using Shop.Application.DTOs.ProductDTOs;
 using Shop.Application.Interfaces.Services;
 using Shop.Application.Queries.ProductQueries.GetAllProducts;
 
@@ -10,7 +11,10 @@ namespace Shop.Api.Controllers;
 [ApiController]
 [Route("api/v1/products")]
 [LogActionFilter]
-public class ProductController(IMediator mediator, IProductService productService) : ControllerBase
+public class ProductController(
+    IMediator mediator,
+    IProductService productService,
+    IProductFeedbackService productFeedbackService) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetProducts(CancellationToken cancellationToken)
@@ -45,5 +49,26 @@ public class ProductController(IMediator mediator, IProductService productServic
         }
 
         return NoContent();
+    }
+
+    [HttpPost("{id:int}/feedback")]
+    public async Task<IActionResult> AddProductFeedback(
+        [FromRoute] int id,
+        [FromBody] ProductFeedbackCreateDTO dto,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var feedback = await productFeedbackService.AddAsync(id, dto, cancellationToken);
+            return Created($"/api/v1/products/{id}/feedback/{feedback.Id}", feedback);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 }

@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using MongoDB.Driver;
 using Shop.Api.Interfaces;
 using Shop.Api.Middlewares;
 using Shop.Api.Services;
@@ -53,6 +55,9 @@ public class Program
 
         builder.Services.Configure<RabbitMqSettings>(
             configuration.GetSection("RabbitMQ"));
+
+        builder.Services.Configure<MongoDbSettings>(
+            configuration.GetSection("MongoDb"));
 
         // ================= AutoMapper =================
         builder.Services.AddAutoMapper(
@@ -119,6 +124,15 @@ public class Program
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddSingleton<IUserQueuePublisher, RabbitMqUserPublisher>();
         builder.Services.AddSingleton<IOrderQueuePublisher, RabbitMqOrderPublisher>();
+        builder.Services.AddSingleton<IMongoClient>(serviceProvider =>
+        {
+            var mongoSettings = serviceProvider
+                .GetRequiredService<IOptions<MongoDbSettings>>()
+                .Value;
+
+            return new MongoClient(mongoSettings.ConnectionString);
+        });
+        builder.Services.AddScoped<IProductFeedbackService, MongoProductFeedbackService>();
         //--------------REPOSITORIES
         builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
         builder.Services.AddScoped<IProductRepository, ProductRepository>();
