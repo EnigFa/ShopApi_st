@@ -28,7 +28,7 @@ public class ProductRepository(ShopDbContext context) : IProductRepository
         return product;
     }
 
-    public async Task<bool> DeleteProductAsync(int id)
+    public async Task<bool> DeactivateProductAsync(int id)
     {
         var product = await context.Products
             .FirstOrDefaultAsync(item => item.Id == id);
@@ -38,7 +38,7 @@ public class ProductRepository(ShopDbContext context) : IProductRepository
             return false;
         }
 
-        context.Products.Remove(product);
+        product.IsActive = false;
         await context.SaveChangesAsync();
         return true;
     }

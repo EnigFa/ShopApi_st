@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Shop.Api.Filters;
-using Shop.Application.Commands.ProductCommands.DeleteProduct;
+using Shop.Application.Commands.ProductCommands.DeactivateProduct;
 using Shop.Application.Interfaces.Services;
 using Shop.Application.Queries.ProductQueries.GetAllProducts;
 
@@ -32,14 +32,14 @@ public class ProductController(IMediator mediator, IProductService productServic
         return Ok(product);
     }
 
-    [HttpDelete("{id:int}")]
-    public async Task<IActionResult> DeleteProduct(
+    [HttpPatch("{id:int}/deactivate")]
+    public async Task<IActionResult> DeactivateProduct(
         [FromRoute] int id,
         CancellationToken cancellationToken)
     {
-        var deletedId = await mediator.Send(new DeleteProductCommand(id), cancellationToken);
+        var deactivatedId = await mediator.Send(new DeactivateProductCommand(id), cancellationToken);
 
-        if (deletedId == null)
+        if (deactivatedId == null)
         {
             return NotFound();
         }

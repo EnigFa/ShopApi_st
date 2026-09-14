@@ -15,7 +15,8 @@ public class AuthService(
     IAuthRepository _repository,
     IHashHelper _hashHelper,
     IJWTService _jwtService,
-    IEmailService _emailService) : IAuthService
+    IEmailService _emailService,
+    IUserQueuePublisher _userQueuePublisher) : IAuthService
 {
 
     public async Task<(
@@ -48,6 +49,11 @@ public class AuthService(
 
                 await _repository.AddRefreshTokenAsync(
                     refreshToken);
+
+                await _userQueuePublisher.PublishRegisteredUserAsync(
+                    registerUser.Id,
+                    registerUser.Email,
+                    registerUser.Role.ToString());
 
                 return (
                     _mapper.Map<UserReadDTO>(registerUser),

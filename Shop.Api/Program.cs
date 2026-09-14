@@ -51,6 +51,9 @@ public class Program
         builder.Services.Configure<EmailSettings>(
             configuration.GetSection("Email"));
 
+        builder.Services.Configure<RabbitMqSettings>(
+            configuration.GetSection("RabbitMQ"));
+
         // ================= AutoMapper =================
         builder.Services.AddAutoMapper(
             _ => { },
@@ -114,6 +117,7 @@ public class Program
         builder.Services.AddSingleton<IHashHelper, HashHelper>();
         builder.Services.AddScoped<IJWTService, JWTService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddSingleton<IUserQueuePublisher, RabbitMqUserPublisher>();
         //--------------REPOSITORIES
         builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
         builder.Services.AddScoped<IProductRepository, ProductRepository>();
