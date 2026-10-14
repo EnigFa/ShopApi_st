@@ -1,112 +1,137 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Shop.Api.Exceptions.HandlerExceptions;
+using Shop.Application.DTOs.AuthDTOs;
 using Shop.Application.DTOs.UserDTOs;
 using Shop.Application.Interfaces.Services;
+using Shop.Domain.Models;
+using System.Security.Claims;
 
 namespace Shop.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/[controller]")]
-public class AuthController(IAuthService _authService) : ControllerBase
+
+public class AuthController(IAuthService _authService, IWebHostEnvironment _environment):ControllerBase
 {
+    // Вхід через Google
+    [HttpGet("login-google")]
+    public IActionResult LoginGoogle()
+    {
+        var properties = new AuthenticationProperties
+        {
+            RedirectUri = Url.Action(nameof(ExternalResponse))
+        };
+        return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+    }
+
+    // Зворотний виклик після успішної авторизації
+    [HttpGet("external-response")]
+    public async Task<IActionResult> ExternalResponse()
+    {
+        var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+        if (!result.Succeeded)
+            return BadRequest("Помилка зовнішньої аутентифікації.");
+
+        var claims = result.Principal.Identities.FirstOrDefault()?.Claims;
+
+        var email = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+        var name = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
+        var providerId = claims?.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+        // Тут зазвичай виконується:
+        // 1. Пошук користувача в БД за email/providerId.
+        // 2. Реєстрація нового користувача, якщо його немає.
+        // 3. Генерація власного JWT  (refresh and access)
+
+        return Ok(new { Name = name, Email = email, ProviderId = providerId });
+    }
+
+    [HttpPost("logout")]
+    [Authorize]
+    public async Task<IActionResult> Logout()
+    {
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        return Ok("Вихід успішний.");
+    }
+
     [HttpPost("register")]
-    public async Task<IActionResult> RegisterUser(
-        [FromBody] UserCreateDTO dto)
+    public async Task<IActionResult> RegisterUser([FromBody] UserCreateDTO dto)
     {
         var user = await _authService.RegisterAsync(dto);
+        if (user.User == null || user.Token == null || user.RefreshToken == null)
+            throw new BadRequestException("Користувач за таким email вже існує");
 
-        if (user.User == null ||
-            user.Token == null ||
-            user.RefreshToken == null)
-        {
-            return BadRequest("Користувач за таким email вже існує");
-        }
 
         Response.Cookies.Append(
             "refreshToken",
             user.RefreshToken,
-            new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict
-            });
-
-        return Ok(new
-        {
-            user = user.User,
-            token = user.Token,
-            refresh_token = user.RefreshToken
-        });
+            CreateRefreshCookieOptions());
+        return Ok(new { user = user.User, token = user.Token, refreshToken = user.RefreshToken });
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> LoginUser(
-        [FromBody] UserLoginDTO dto)
+    public async Task<IActionResult> LoginUser([FromBody] UserLoginDTO dto)
     {
         var user = await _authService.LoginAsync(dto);
+        if (user.Token == null || user.RefreshToken == null)
+            throw new UnauthorizedAppException("Невірний email або пароль");
 
-        if (user.User == null ||
-            user.Token == null ||
-            user.RefreshToken == null)
-        {
-            return Unauthorized("Невірний email або пароль");
-        }
 
         Response.Cookies.Append(
             "refreshToken",
             user.RefreshToken,
-            new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict
-            });
-
-        return Ok(new
-        {
-            user = user.User,
-            token = user.Token,
-            refresh_token = user.RefreshToken
-        });
+            CreateRefreshCookieOptions());
+        return Ok(new { token = user.Token, refreshToken = user.RefreshToken });
     }
 
+
     [HttpPost("refresh")]
-    public async Task<IActionResult> RefreshToken()
+    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest? dto)
     {
-        var refreshTokenExists = Request.Cookies.TryGetValue(
-            "refreshToken",
-            out var refreshToken);
+        var refreshToken = dto?.RefreshToken;
 
-        if (!refreshTokenExists ||
-            string.IsNullOrWhiteSpace(refreshToken))
+        if (string.IsNullOrEmpty(refreshToken))
+            Request.Cookies.TryGetValue("refreshToken", out refreshToken);
+
+        if (string.IsNullOrEmpty(refreshToken))
+            throw new UnauthorizedAppException("Refresh token not found.");
+
+        var result = await _authService.RefreshTokenAsync(refreshToken);
+        if(result==null)
+            throw new UnauthorizedAppException("Refresh token not created.");
+        Response.Cookies.Append(
+           "refreshToken",
+           result.RefreshToken,
+           CreateRefreshCookieOptions());
+        return Ok(new { token = result.AccessToken, refreshToken = result.RefreshToken });
+    }
+
+    private CookieOptions CreateRefreshCookieOptions()
+    {
+        var isDevelopment = _environment.IsDevelopment();
+
+        return new CookieOptions
         {
-            return Unauthorized("Refresh token відсутній");
-        }
-
-        var newAccessToken =
-            await _authService.RefreshAccessTokenAsync(refreshToken);
-
-        if (newAccessToken == null)
-        {
-            return Unauthorized("Refresh token недійсний або прострочений");
-        }
-
-        return Ok(new
-        {
-            token = newAccessToken
-        });
+            HttpOnly = true,
+            Secure = !isDevelopment,
+            SameSite = isDevelopment ? SameSiteMode.Lax : SameSiteMode.Strict,
+            Path = "/"
+        };
     }
 
     [Authorize]
     [HttpGet]
     public IActionResult Profile()
     {
-        var email = User.FindFirst(
-            System.Security.Claims.ClaimTypes.Email)?.Value;
-
-        var role = User.FindFirst(
-            System.Security.Claims.ClaimTypes.Role)?.Value;
+        var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+        var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
 
         return Ok(new
         {
@@ -115,61 +140,4 @@ public class AuthController(IAuthService _authService) : ControllerBase
         });
     }
 
-    [Authorize(Roles = "Admin")]
-    [HttpPost("staff")]
-    public async Task<IActionResult> CreateStaff(
-        [FromBody] StaffCreateDTO dto)
-    {
-        var user = await _authService.CreateStaffAsync(dto);
-
-        if (user == null)
-        {
-            return BadRequest(
-                "Не вдалося створити користувача. Email уже зайнятий або роль має бути Admin чи Moderator.");
-        }
-
-        return Ok(user);
-    }
-
-    [HttpPost("forgot-password")]
-    public async Task<IActionResult> ForgotPassword(
-        [FromBody] ForgotPasswordDTO dto)
-    {
-        await _authService.RequestPasswordResetAsync(dto.Email);
-
-        return Ok(new
-        {
-            message = "Якщо обліковий запис існує, лист для відновлення пароля надіслано."
-        });
-    }
-
-    [Authorize(Roles = "Admin,Moderator")]
-    [HttpPost("request-password-reset")]
-    public async Task<IActionResult> RequestPasswordReset(
-        [FromBody] ForgotPasswordDTO dto)
-    {
-        await _authService.RequestPasswordResetAsync(dto.Email);
-
-        return Ok(new
-        {
-            message = "Якщо обліковий запис існує, лист для відновлення пароля надіслано."
-        });
-    }
-
-    [HttpPost("reset-password")]
-    public async Task<IActionResult> ResetPassword(
-        [FromBody] ResetPasswordDTO dto)
-    {
-        var isReset = await _authService.ResetPasswordAsync(dto);
-
-        if (!isReset)
-        {
-            return BadRequest("Токен недійсний або прострочений");
-        }
-
-        return Ok(new
-        {
-            message = "Пароль успішно змінено"
-        });
-    }
 }

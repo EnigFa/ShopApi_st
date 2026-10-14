@@ -6,6 +6,7 @@ using System.Text;
 
 namespace Shop.Domain.Models;
 
+//TODO: до категорії додати description
 [Table("categories")]
 public class Category:BaseEntity
 {

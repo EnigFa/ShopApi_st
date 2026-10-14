@@ -1,14 +1,12 @@
 ﻿using Shop.Application.DTOs.UserDTOs;
-using Shop.Domain.Models;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace Shop.Application.Interfaces.Services;
 
 public interface IJWTService
 {
-    public string GenerateAccessToken(
-        UserLoginDTO userLoginDto,
-        string role);
-
-    public RefreshToken GenerateRefreshToken(
-        Guid userId);
+    public string GenerateAccessToken(UserLoginDTO userLoginDto, string role);
+    public (string,int) GenerateRefreshToken();
 }

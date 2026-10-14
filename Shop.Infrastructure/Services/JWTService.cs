@@ -2,9 +2,9 @@
 using Microsoft.IdentityModel.Tokens;
 using Shop.Application.DTOs.UserDTOs;
 using Shop.Application.Interfaces.Services;
-using Shop.Domain.Models;
 using Shop.Infrastructure.Configuration;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -13,7 +13,7 @@ using System.Text;
 
 namespace Shop.Infrastructure.Services;
 
-public class JWTService : IJWTService
+public class JWTService:IJWTService
 {
     private readonly JwtSettings _jwtSettings;
 
@@ -22,9 +22,7 @@ public class JWTService : IJWTService
         _jwtSettings = jwtOptions.Value;
     }
 
-    public string GenerateAccessToken(
-        UserLoginDTO userLoginDto,
-        string role)
+    public string GenerateAccessToken(UserLoginDTO userLoginDto, string role)
     {
         var key = Encoding.UTF8.GetBytes(_jwtSettings.Key);
 
@@ -32,39 +30,26 @@ public class JWTService : IJWTService
         {
             new Claim(ClaimTypes.Email, userLoginDto.Email),
             new Claim(ClaimTypes.Role, role),
-            new Claim(
-                JwtRegisteredClaimNames.Jti,
-                Guid.NewGuid().ToString())
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
         var signingKey = new SymmetricSecurityKey(key);
-
-        var credentials = new SigningCredentials(
-            signingKey,
-            SecurityAlgorithms.HmacSha256);
+        var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
             issuer: _jwtSettings.Issuer,
             audience: _jwtSettings.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(
-                _jwtSettings.ExpiresMinutes),
+            expires: DateTime.UtcNow.AddMinutes(_jwtSettings.ExpiresMinutes),
             signingCredentials: credentials
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public RefreshToken GenerateRefreshToken(Guid userId)
+    public (string,int) GenerateRefreshToken()
     {
-        var randomBytes = RandomNumberGenerator.GetBytes(64);
-
-        return new RefreshToken
-        {
-            Token = Convert.ToBase64String(randomBytes),
-            ExpiresAt = DateTime.UtcNow.AddDays(
-                _jwtSettings.RefreshTokenExpiresDays),
-            UserId = userId
-        };
+        return (Convert.ToBase64String(
+            RandomNumberGenerator.GetBytes(64)), _jwtSettings.ExpiresRefreshTokenDay);
     }
 }

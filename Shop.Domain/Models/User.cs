@@ -27,4 +27,7 @@ public class User:BaseEntity
 
     [Column("is_active")]
     public bool IsActive { get; set; } = true;
+
+    public ICollection<RefreshToken> RefreshTokens { get; set; }
+      = new List<RefreshToken>();
 }

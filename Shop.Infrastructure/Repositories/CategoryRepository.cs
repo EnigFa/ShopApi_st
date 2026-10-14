@@ -21,9 +21,26 @@ public class CategoryRepository(ShopDbContext _context) : ICategoryRepository
             .Include(c => c.Products)
             .FirstOrDefaultAsync(c => c.Id == id);
     }
-    public async Task<List<Category>?> GetAllCategoriesAsync()
+    public async Task<List<Category>?> GetAllCategoriesAsync(CancellationToken ct)
     {
-        return await _context.Categories.ToListAsync();
+        return await _context.Categories.ToListAsync(ct);
 
     }
+
+    public async Task<Category?> GetCategoryBySlugAsync(string slug)
+    {
+        return await _context.Categories
+             .Include(c => c.Products)
+             .FirstOrDefaultAsync(c => c.Slug == slug);
+    }
+
+    public async Task<List<Category>?> GetCategoriesByParentIdAsync(int id)
+    {
+        var category = await _context.Categories
+        .Include(c => c.SubCategories)
+        .FirstOrDefaultAsync(c => c.Id == id);
+        return category?.SubCategories.ToList();
+    }
+
+   
 }

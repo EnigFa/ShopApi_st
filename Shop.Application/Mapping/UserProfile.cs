@@ -12,7 +12,6 @@ public class UserProfile:Profile
     public UserProfile()
     {
         CreateMap<UserCreateDTO, User>();
-        CreateMap<StaffCreateDTO, User>();
         CreateMap<User, UserReadDTO>();
         CreateMap<User, UserLoginDTO>();
     }

@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Shop.Infrastructure.Data;
 
-public class ShopDbContext : DbContext
+public class ShopDbContext:DbContext
 {
     public ShopDbContext(DbContextOptions<ShopDbContext> options) : base(options) { }
 
@@ -16,8 +16,8 @@ public class ShopDbContext : DbContext
     public DbSet<ProductImage> ProductImages { get; set; }
 
     public DbSet<User> Users { get; set; }
+
     public DbSet<RefreshToken> RefreshTokens { get; set; }
-    public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
 
     // Автоматично встановлює CreatedAt і UpdatedAt перед збереженням
     public override int SaveChanges()
@@ -53,6 +53,11 @@ public class ShopDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // --- User ---
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasIndex(u => u.Email).IsUnique();
+        });
         // --- Category ---
         modelBuilder.Entity<Category>(entity =>
         {
@@ -82,14 +87,6 @@ public class ShopDbContext : DbContext
             entity.HasOne(i => i.Product)
                   .WithMany(p => p.Images)
                   .HasForeignKey(i => i.ProductId)
-                  .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        modelBuilder.Entity<PasswordResetToken>(entity =>
-        {
-            entity.HasOne(token => token.User)
-                  .WithMany()
-                  .HasForeignKey(token => token.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
         });
     }
