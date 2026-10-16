@@ -196,6 +196,7 @@ public class Program
         builder.Services.AddScoped<ICategoryService, CategoryService>();
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IProductService, ProductService>();
+        builder.Services.AddScoped<IDeliveryAddressService, DeliveryAddressService>();
         builder.Services.AddScoped<IJWTService, JWTService>();
 
 
@@ -222,6 +223,7 @@ public class Program
         builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
         builder.Services.AddScoped<IAuthRepository, AuthRepository>();
         builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        builder.Services.AddScoped<IDeliveryAddressRepository, DeliveryAddressRepository>();
 
 
         // ================= BUILD APP =================

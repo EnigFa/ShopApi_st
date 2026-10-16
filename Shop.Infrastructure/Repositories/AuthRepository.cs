@@ -10,9 +10,9 @@ namespace Shop.Infrastructure.Repositories;
 
 public class AuthRepository(ShopDbContext _context) : IAuthRepository
 {
-    public async Task<User?> GetByEmailAsync(string email)
+    public async Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-        var userFromDb = await _context.Users.FirstOrDefaultAsync(user => user.Email == email);
+        var userFromDb = await _context.Users.FirstOrDefaultAsync(user => user.Email == email, cancellationToken);
         return userFromDb;
     }
 

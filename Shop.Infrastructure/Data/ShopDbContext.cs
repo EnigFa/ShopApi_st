@@ -19,6 +19,8 @@ public class ShopDbContext:DbContext
 
     public DbSet<RefreshToken> RefreshTokens { get; set; }
 
+    public DbSet<DeliveryAddress> DeliveryAddresses { get; set; }
+
     // Автоматично встановлює CreatedAt і UpdatedAt перед збереженням
     public override int SaveChanges()
     {
@@ -79,6 +81,15 @@ public class ShopDbContext:DbContext
                   .WithMany(c => c.Products)
                   .HasForeignKey(p => p.CategoryId)
                   .OnDelete(DeleteBehavior.Restrict); //забороняємо видалення
+        });
+
+        // --- DeliveryAddress ---
+        modelBuilder.Entity<DeliveryAddress>(entity =>
+        {
+            entity.HasOne(address => address.User)
+                  .WithMany(user => user.DeliveryAddresses)
+                  .HasForeignKey(address => address.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
 
         // --- ProductImage ---

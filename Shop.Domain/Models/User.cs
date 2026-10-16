@@ -30,4 +30,7 @@ public class User:BaseEntity
 
     public ICollection<RefreshToken> RefreshTokens { get; set; }
       = new List<RefreshToken>();
+
+    public ICollection<DeliveryAddress> DeliveryAddresses { get; set; }
+      = new List<DeliveryAddress>();
 }

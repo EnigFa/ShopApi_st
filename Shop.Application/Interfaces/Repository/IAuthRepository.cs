@@ -9,7 +9,7 @@ public interface IAuthRepository
     Task<User?> RegisterUserAsync(User user, string hash);
     Task<bool> IsExistEmailAsync(string email);
 
-    Task<User?> GetByEmailAsync(string email);
+    Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
 
     Task<User?> GetUserById(Guid id);
 }
