@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] — Магазин</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="topbar">
+        <a class="brand" asp-controller="Categories" asp-action="Index">Магазин</a>
+        <nav class="menu">
+            <a class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Categories" ? "active" : "")"
+               asp-controller="Categories" asp-action="Index">Категорії</a>
+            <a class="menu-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")"
+               asp-controller="Users" asp-action="Index">Користувачі</a>
+        </nav>
+    </header>
+    <main class="page">
+        @RenderBody()
+    </main>
+</body>
+</html>

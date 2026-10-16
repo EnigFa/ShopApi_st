@@ -1,0 +1,42 @@
+@model IReadOnlyList<UserReadDTO>
+@{
+    ViewData["Title"] = "Користувачі";
+}
+
+<h1>Користувачі</h1>
+
+@if (Model.Count == 0)
+{
+    <p class="empty">Користувачів поки немає.</p>
+}
+else
+{
+    <table>
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Email</th>
+                <th>Роль</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                <tr>
+                    <td>@user.Id</td>
+                    <td>@user.Email</td>
+                    <td>@RoleName(user.Role)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@functions {
+    private static string RoleName(UserRole role) => role switch
+    {
+        UserRole.Admin => "Адміністратор",
+        UserRole.Moderator => "Модератор",
+        _ => "Користувач"
+    };
+}

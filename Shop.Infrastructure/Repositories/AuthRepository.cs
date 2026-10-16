@@ -22,6 +22,14 @@ public class AuthRepository(ShopDbContext _context) : IAuthRepository
         return userFromDb;
     }
 
+    public Task<List<User>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        return _context.Users
+            .AsNoTracking()
+            .OrderBy(user => user.Email)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<bool> IsExistEmailAsync(string email)
     {
         var userFromDb = await _context.Users.FirstOrDefaultAsync(user => user.Email == email);

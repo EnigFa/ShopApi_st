@@ -5,5 +5,6 @@
   <Project Path="Shop.Application/Shop.Application.csproj" Id="14f09cac-8d85-47f5-8841-838b3f28ca9d" />
   <Project Path="Shop.Domain/Shop.Domain.csproj" />
   <Project Path="Shop.Infrastructure/Shop.Infrastructure.csproj" Id="aa48872c-e4ef-42c4-b2e5-9f0e57a139fc" />
+  <Project Path="Shop.Mvc/Shop.Mvc.csproj" />
   <Project Path="ShopTest/ShopTest.csproj" Id="a9aa54a4-4d8f-4699-9e89-3b27f311dd37" />
 </Solution>

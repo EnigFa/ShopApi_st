@@ -11,4 +11,6 @@ public interface IAuthService
     Task<(UserReadDTO? User, string? Token, string? RefreshToken)> RegisterAsync(UserCreateDTO dto);
     Task<(string? Token, string? RefreshToken)> LoginAsync(UserLoginDTO dto);
     Task<AuthResponseDto?> RefreshTokenAsync(string refreshToken);
+
+    Task<List<UserReadDTO>> GetAllUsersAsync(CancellationToken cancellationToken);
 }

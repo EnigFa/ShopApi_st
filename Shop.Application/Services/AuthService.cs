@@ -115,4 +115,10 @@ public class AuthService(
             RefreshToken = token.Token
         };
     }
+
+    public async Task<List<UserReadDTO>> GetAllUsersAsync(CancellationToken cancellationToken)
+    {
+        var users = await _repository.GetAllAsync(cancellationToken);
+        return _mapper.Map<List<UserReadDTO>>(users);
+    }
 }

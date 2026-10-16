@@ -12,4 +12,6 @@ public interface IAuthRepository
     Task<User?> GetByEmailAsync(string email);
 
     Task<User?> GetUserById(Guid id);
+
+    Task<List<User>> GetAllAsync(CancellationToken cancellationToken);
 }
