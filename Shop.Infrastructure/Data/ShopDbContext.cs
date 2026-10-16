@@ -19,6 +19,10 @@ public class ShopDbContext:DbContext
 
     public DbSet<RefreshToken> RefreshTokens { get; set; }
 
+    public DbSet<Provider> Providers { get; set; }
+
+    public DbSet<UserProvider> UserProviders { get; set; }
+
     // Автоматично встановлює CreatedAt і UpdatedAt перед збереженням
     public override int SaveChanges()
     {
@@ -79,6 +83,27 @@ public class ShopDbContext:DbContext
                   .WithMany(c => c.Products)
                   .HasForeignKey(p => p.CategoryId)
                   .OnDelete(DeleteBehavior.Restrict); //забороняємо видалення
+        });
+
+        modelBuilder.Entity<Provider>(entity =>
+        {
+            entity.HasIndex(provider => provider.Name).IsUnique();
+        });
+
+        modelBuilder.Entity<UserProvider>(entity =>
+        {
+            entity.HasOne(link => link.User)
+                  .WithMany(user => user.UserProviders)
+                  .HasForeignKey(link => link.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(link => link.Provider)
+                  .WithMany(provider => provider.UserProviders)
+                  .HasForeignKey(link => link.ProviderId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(link => new { link.ProviderId, link.NumberProvider }).IsUnique();
+            entity.HasIndex(link => new { link.UserId, link.ProviderId }).IsUnique();
         });
 
         // --- ProductImage ---

@@ -45,12 +45,26 @@ public class AuthController(IAuthService _authService, IWebHostEnvironment _envi
         var name = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
         var providerId = claims?.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 
-        // Тут зазвичай виконується:
-        // 1. Пошук користувача в БД за email/providerId.
-        // 2. Реєстрація нового користувача, якщо його немає.
-        // 3. Генерація власного JWT  (refresh and access)
+        if (string.IsNullOrWhiteSpace(email))
+            return BadRequest("Провайдер не передав email.");
 
-        return Ok(new { Name = name, Email = email, ProviderId = providerId });
+        var auth = await _authService.ExternalLoginAsync(email, "google", providerId ?? string.Empty);
+        if (auth.User == null || auth.Token == null || auth.RefreshToken == null)
+            throw new BadRequestException("Не вдалося виконати вхід через провайдера.");
+
+        Response.Cookies.Append(
+            "refreshToken",
+            auth.RefreshToken,
+            CreateRefreshCookieOptions());
+
+        return Ok(new
+        {
+            name,
+            email,
+            user = auth.User,
+            token = auth.Token,
+            refreshToken = auth.RefreshToken
+        });
     }
 
     [HttpPost("logout")]

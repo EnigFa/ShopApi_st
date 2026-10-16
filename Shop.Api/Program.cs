@@ -207,6 +207,7 @@ public class Program
         // ================= ADMIN SEEDER =================
 
         builder.Services.AddScoped<AdminSeeder>();
+        builder.Services.AddScoped<ProviderSeeder>();
 
 
         // ================= CACHE =================
@@ -222,6 +223,7 @@ public class Program
         builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
         builder.Services.AddScoped<IAuthRepository, AuthRepository>();
         builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        builder.Services.AddScoped<IProviderRepository, ProviderRepository>();
 
 
         // ================= BUILD APP =================
@@ -235,6 +237,9 @@ public class Program
         {
             var seeder = scope.ServiceProvider.GetRequiredService<AdminSeeder>();
             await seeder.SeedAsync();
+
+            var providerSeeder = scope.ServiceProvider.GetRequiredService<ProviderSeeder>();
+            await providerSeeder.SeedAsync();
         }
 
 

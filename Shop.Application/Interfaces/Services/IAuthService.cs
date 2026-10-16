@@ -10,5 +10,9 @@ public interface IAuthService
 {
     Task<(UserReadDTO? User, string? Token, string? RefreshToken)> RegisterAsync(UserCreateDTO dto);
     Task<(string? Token, string? RefreshToken)> LoginAsync(UserLoginDTO dto);
+    Task<(UserReadDTO? User, string? Token, string? RefreshToken)> ExternalLoginAsync(
+        string email,
+        string providerName,
+        string numberProvider);
     Task<AuthResponseDto?> RefreshTokenAsync(string refreshToken);
 }

@@ -161,7 +161,7 @@ namespace Shop.Infrastructure.Migrations
                     b.ToTable("product_images");
                 });
 
-            modelBuilder.Entity("Shop.Domain.Models.RefreshToken", b =>
+            modelBuilder.Entity("Shop.Domain.Models.Provider", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -169,6 +169,27 @@ namespace Shop.Infrastructure.Migrations
                         .HasColumnName("id");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("providers");
+                });
+
+            modelBuilder.Entity("Shop.Domain.Models.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2")
@@ -187,6 +208,10 @@ namespace Shop.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("token");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updated_at");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("user_id");
@@ -195,7 +220,7 @@ namespace Shop.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("refresh_token");
+                    b.ToTable("refresh_tokens");
                 });
 
             modelBuilder.Entity("Shop.Domain.Models.User", b =>
@@ -237,6 +262,43 @@ namespace Shop.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("users");
+                });
+
+            modelBuilder.Entity("Shop.Domain.Models.UserProvider", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("NumberProvider")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("number_provider");
+
+                    b.Property<int>("ProviderId")
+                        .HasColumnType("int")
+                        .HasColumnName("provider_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProviderId", "NumberProvider")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "ProviderId")
+                        .IsUnique();
+
+                    b.ToTable("usersProviders");
                 });
 
             modelBuilder.Entity("Shop.Domain.Models.Category", b =>
@@ -282,6 +344,25 @@ namespace Shop.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Shop.Domain.Models.UserProvider", b =>
+                {
+                    b.HasOne("Shop.Domain.Models.Provider", "Provider")
+                        .WithMany("UserProviders")
+                        .HasForeignKey("ProviderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Shop.Domain.Models.User", "User")
+                        .WithMany("UserProviders")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Provider");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Shop.Domain.Models.Category", b =>
                 {
                     b.Navigation("Products");
@@ -294,9 +375,16 @@ namespace Shop.Infrastructure.Migrations
                     b.Navigation("Images");
                 });
 
+            modelBuilder.Entity("Shop.Domain.Models.Provider", b =>
+                {
+                    b.Navigation("UserProviders");
+                });
+
             modelBuilder.Entity("Shop.Domain.Models.User", b =>
                 {
                     b.Navigation("RefreshTokens");
+
+                    b.Navigation("UserProviders");
                 });
 #pragma warning restore 612, 618
         }
